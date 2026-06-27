@@ -1,0 +1,4 @@
+streamlit>=1.45
+openpyxl>=3.1
+networkx>=3.3
+openai>=1.35.0
