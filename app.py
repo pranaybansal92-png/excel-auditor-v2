@@ -48,10 +48,20 @@ def main() -> None:
     st.title("Excel Auditor V2")
     st.caption("Structure-first auditing and AI-ready workbook navigation.")
 
+        server_api_key = os.getenv("OPENAI_API_KEY", "").strip()
+
     with st.sidebar:
         st.subheader("AI Settings")
-        api_key = st.text_input("OpenAI API Key", type="password")
+        if server_api_key:
+            st.success("OpenAI is configured server-side for all users.")
+            custom_key_enabled = st.checkbox("Override with a custom OpenAI API key", value=False)
+            api_key = st.text_input("Custom OpenAI API Key", type="password") if custom_key_enabled else ""
+        else:
+            api_key = st.text_input("OpenAI API Key", type="password")
         model_choice = st.selectbox("Model", ["gpt-5.4-mini", "gpt-5.4", "gpt-5.2"], index=0)
+
+    effective_api_key = api_key.strip() or server_api_key
+
 
     uploaded = st.file_uploader("Upload an Excel workbook", type=["xlsx"])
     if not uploaded:
@@ -157,7 +167,7 @@ def main() -> None:
                 )
 
     with tab_chat:
-        if is_openai_enabled(api_key):
+        if is_openai_enabled(effective_api_key):
             st.success("OpenAI chat is enabled for grounded workbook Q&A.")
         else:
             st.info("Add an OpenAI API key in the sidebar to enable real AI chat. Fallback local Q&A is active for now.")
@@ -207,14 +217,14 @@ def main() -> None:
         st.dataframe(summarize_sheets(workbook, limit=12), use_container_width=True)
 
         if ask_clicked and question:
-            if is_openai_enabled(api_key):
+            if is_openai_enabled(effective_api_key):
                 st.write(
                     answer_with_openai(
                         question,
                         workbook,
                         graph,
                         issues,
-                        api_key=api_key,
+                        api_key=effective_api_key,
                         focus_sheet=selected_sheet,
                         model=model_choice,
                     )
